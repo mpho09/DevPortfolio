@@ -15,7 +15,7 @@ import {
   type SimpleIcon,
 } from 'simple-icons'
 
-export type SkillCategory = 'Frontend' | 'Backend & Data' | 'Tools & 3D'
+export type SkillCategory = 'Frontend' | 'Backend & Data' | 'Tools'
 
 export interface Skill {
   name: string
@@ -26,7 +26,7 @@ export interface Skill {
   description: string
 }
 
-export const skillCategories: Array<'All' | SkillCategory> = ['All', 'Frontend', 'Backend & Data', 'Tools & 3D']
+export const skillCategories: Array<'All' | SkillCategory> = ['All', 'Frontend', 'Backend & Data', 'Tools']
 
 export const skills: Skill[] = [
   {
@@ -103,14 +103,14 @@ export const skills: Skill[] = [
     name: 'Git & GitHub',
     icon: [siGit, siGithub],
     color: '#F05032',
-    category: 'Tools & 3D',
+    category: 'Tools',
     description: 'Branching, pull requests, code review and project boards in teams.',
   },
   {
     name: 'Three.js',
     icon: siThreedotjs,
     color: '#a5b4ff',
-    category: 'Tools & 3D',
+    category: 'Tools',
     description: 'Real-time 3D on the web with React Three Fiber and custom shaders.',
   },
 ]
