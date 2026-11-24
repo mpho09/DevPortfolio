@@ -82,7 +82,8 @@ export interface HeroAnchors {
   /** Vertical centre and height of the name heading */
   nameCenterY: number
   nameHeight: number
-  /** Right edge of the longest name line */
+  /** Left and right edges of the longest name line */
+  nameLeft: number
   nameRight: number
   /** Top of the status pill (the first line of hero text) */
   badgeTop: number
@@ -94,7 +95,6 @@ export interface HeroAnchors {
 const HEAD_CENTER = 0.3
 const HEAD_HEIGHT = 1.4
 const BUST_HALF_WIDTH = 1.0
-const VISIBLE_BOTTOM = -0.75
 
 /**
  * Turns the portrait toward the cursor and places it relative to the hero text:
@@ -125,12 +125,16 @@ function Rig({ children, anchors }: { children: React.ReactNode; anchors: React.
       targetX = toWorldX(a.nameRight) + free / 2
       targetY = toWorldY(a.nameCenterY) - HEAD_CENTER * targetScale
     } else if (a) {
-      // Fit the bust into the space between the nav bar and the first line of text
-      const top = a.navBottom + 8
-      const bottom = a.badgeTop - 8
-      const regionH = Math.max(40, bottom - top) * unit
-      targetScale = Math.min(regionH / (1 - VISIBLE_BOTTOM), (viewport.width * 0.9) / (BUST_HALF_WIDTH * 2))
-      targetY = toWorldY(top) - 1 * targetScale
+      // Phones and tablets: the portrait sits behind the name as a backdrop, face centred on it
+      // Head sized to frame the two-line name
+      targetScale = Math.min(
+        (viewport.width * 0.95) / (BUST_HALF_WIDTH * 2),
+        (a.nameHeight * unit * 2.1) / HEAD_HEIGHT,
+      )
+      // Centred on screen; the name is left-aligned, so the face shows around and through the letters.
+      // Lifted slightly so the chin ends at the surname and the headline below stays clear
+      targetX = 0
+      targetY = toWorldY(a.nameCenterY) - (HEAD_CENTER - 0.22) * targetScale
     }
     const first = g.userData.placed !== true
     const k = first ? 1 : 0.1
@@ -217,13 +221,19 @@ export default function HeroScene({ onReady }: { onReady?: () => void }) {
       const sRect = section.getBoundingClientRect()
       const words = name.querySelectorAll<HTMLElement>('[data-name-line]')
       let right = 0
-      words.forEach((w) => (right = Math.max(right, w.getBoundingClientRect().right - sRect.left)))
+      let left = Infinity
+      words.forEach((w) => {
+        const r = w.getBoundingClientRect()
+        right = Math.max(right, r.right - sRect.left)
+        left = Math.min(left, r.left - sRect.left)
+      })
       const top = layoutTop(name)
       anchors.current = {
         canvasW: section.clientWidth,
         canvasH: section.clientHeight,
         nameCenterY: top + name.offsetHeight / 2,
         nameHeight: name.offsetHeight,
+        nameLeft: Number.isFinite(left) ? left : 0,
         nameRight: right || sRect.width / 2,
         badgeTop: layoutTop(badge),
         // The header is fixed with 16px top padding; measured from layout so a hidden nav doesn't skew it

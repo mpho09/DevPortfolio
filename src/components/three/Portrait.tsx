@@ -27,6 +27,7 @@ uniform float uPixelRatio;
 uniform float uSize;
 uniform vec3 uMouse;
 uniform float uMouseStrength;
+uniform vec2 uFade;
 attribute vec3 aPos;
 attribute float aLum;
 attribute vec2 aNormal;
@@ -69,7 +70,7 @@ void main(){
   vScan = smoothstep(0.08, 0.0, abs(aPos.y * 1.6 - scanY));
 
   // Shoulders fade out toward the bottom edge
-  vAlpha = smoothstep(-1.0, -0.15, aPos.y * 1.6) * mix(0.25, 1.0, t);
+  vAlpha = smoothstep(uFade.x, uFade.y, aPos.y * 1.6) * mix(0.25, 1.0, t);
 
   float size = uSize * (0.55 + aLum * 0.9) * (1.0 + push * 1.5 + vScan * 0.6);
   gl_PointSize = size * uPixelRatio * (10.0 / -mv.z);
@@ -81,6 +82,7 @@ uniform vec3 uShadow;
 uniform vec3 uKey;
 uniform vec3 uRim;
 uniform vec3 uScanColor;
+uniform float uDim;
 varying float vLum;
 varying float vRim;
 varying float vKey;
@@ -98,7 +100,7 @@ void main(){
   col += uScanColor * vScan * 0.25;
   col *= 0.35 + light * 0.95;
 
-  gl_FragColor = vec4(col, a * vAlpha * (0.45 + vLum * 0.55));
+  gl_FragColor = vec4(col, a * vAlpha * (0.45 + vLum * 0.55) * uDim);
 }
 `
 
@@ -110,7 +112,7 @@ interface PortraitProps {
 
 export function Portrait({ quality, timeScale, skipIntro = false }: PortraitProps) {
   const points = useRef<THREE.Points>(null!)
-  const { gl, camera } = useThree()
+  const { gl, camera, size } = useThree()
   const [geometry, setGeometry] = useState<THREE.BufferGeometry | null>(null)
   const introStart = useRef<number | null>(null)
 
@@ -134,6 +136,8 @@ export function Portrait({ quality, timeScale, skipIntro = false }: PortraitProp
           uKey: { value: new THREE.Color('#5b8cff') },
           uRim: { value: new THREE.Color('#ff2e7e') },
           uScanColor: { value: new THREE.Color('#22d3ee') },
+          uDim: { value: 1 },
+          uFade: { value: new THREE.Vector2(-1.0, -0.15) },
         },
       }),
     [gl, quality, skipIntro],
@@ -205,6 +209,14 @@ export function Portrait({ quality, timeScale, skipIntro = false }: PortraitProp
       m.x += (helpers.hit.x - m.x) * 0.18
       m.y += (helpers.hit.y - m.y) * 0.18
     }
+    // Dimmer when it sits behind the name (phones and tablets) so the text stays readable
+    const behindText = !(size.width >= 1024 && size.width > size.height)
+    uniforms.uDim.value += ((behindText ? 0.85 : 1) - uniforms.uDim.value) * 0.1
+    // Behind the name only the head shows; shoulders fade out so the text below stays on dark space
+    const fade = uniforms.uFade.value
+    fade.x += ((behindText ? -0.62 : -1.0) - fade.x) * 0.1
+    fade.y += ((behindText ? -0.25 : -0.15) - fade.y) * 0.1
+
     // Stronger reaction while the mouse is moving, settling when it rests
     const target = Math.min(1, 0.2 + pointer.speed * 1.2)
     uniforms.uMouseStrength.value += (target - uniforms.uMouseStrength.value) * 0.08

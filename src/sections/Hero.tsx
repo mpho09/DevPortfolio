@@ -50,7 +50,7 @@ export function Hero() {
   const heading = 'Building Digital Experiences That Matter.'.split(' ')
 
   return (
-    <section ref={ref} id="top" aria-labelledby="hero-name" className="relative isolate flex min-h-svh items-end overflow-hidden lg:landscape:items-center">
+    <section ref={ref} id="top" aria-labelledby="hero-name" className="relative isolate flex min-h-svh items-center overflow-hidden">
       {/* Ambient gradients, visible while/if the 3D scene loads */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-20">
         <div className="absolute top-[-10%] right-[-10%] size-[60vmax] rounded-full bg-[radial-gradient(circle,rgba(61,123,255,0.18),transparent_60%)]" />
@@ -75,15 +75,15 @@ export function Hero() {
       </motion.div>
 
       {/* Readability scrim for small screens where text overlaps the object */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 z-[-5] bg-[linear-gradient(180deg,transparent_25%,rgba(5,6,10,0.7)_55%,rgba(5,6,10,0.9)_85%)] lg:landscape:bg-[linear-gradient(90deg,rgba(5,6,10,0.75)_0%,transparent_60%)]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-[-5] bg-[linear-gradient(180deg,transparent_65%,rgba(5,6,10,0.85)_95%)] lg:landscape:bg-[linear-gradient(90deg,rgba(5,6,10,0.75)_0%,transparent_60%)]" />
 
-      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="container-x relative pt-[clamp(15rem,42svh,26rem)] pb-24 sm:pb-28 lg:landscape:pt-28 lg:landscape:pb-32">
+      <motion.div style={{ y: contentY, opacity: contentOpacity }} className="container-x relative pt-28 pb-28 lg:landscape:pb-32">
         <motion.p
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease }}
           id="hero-badge"
-          className="glass mb-8 inline-flex items-center gap-2.5 rounded-full py-1.5 pr-4 pl-2 text-[13px] text-mist"
+          className="glass mb-8 inline-flex items-center gap-2.5 rounded-full bg-[rgba(9,10,16,0.72)] py-1.5 pr-4 pl-2 text-[13px] text-mist"
         >
           <span className="relative flex size-2.5 items-center justify-center">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan opacity-60" />
@@ -92,7 +92,7 @@ export function Hero() {
           {profile.availability} · {profile.location}
         </motion.p>
 
-        <h1 id="hero-name" className="font-display leading-[0.9] font-bold tracking-[-0.05em]">
+        <h1 id="hero-name" className="font-display leading-[0.9] font-bold tracking-[-0.05em] [text-shadow:0_2px_14px_rgba(5,6,10,0.7)]">
           <span className="sr-only">{profile.name}</span>
           <span aria-hidden data-name-line className="block w-fit text-[clamp(2.9rem,12.4vw,8.5rem)] lg:landscape:text-[clamp(4rem,8.6vw,8.5rem)]">
             <SplitWord word={profile.firstName} delay={0.15} />
@@ -109,7 +109,7 @@ export function Hero() {
           </span>
         </h1>
 
-        <p className="mt-8 max-w-[18ch] font-display text-[clamp(1.6rem,3.4vw,2.9rem)] leading-[1.05] font-semibold tracking-[-0.025em] text-balance sm:max-w-[22ch]">
+        <p className="mt-8 max-w-[18ch] [text-shadow:0_2px_14px_rgba(5,6,10,0.7)] font-display text-[clamp(1.6rem,3.4vw,2.9rem)] leading-[1.05] font-semibold tracking-[-0.025em] text-balance sm:max-w-[22ch]">
           {heading.map((w, i) => (
             <Fragment key={i}>
               <SplitWord word={w} delay={0.45 + i * 0.06} className={i === heading.length - 1 ? 'text-gradient' : ''} />
