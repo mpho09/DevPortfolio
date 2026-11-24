@@ -13,13 +13,12 @@ export const profile = {
 
 export const navLinks = [
   { id: 'about', label: 'About' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'work', label: 'Work' },
+  { id: 'services', label: 'Services' },
+  { id: 'projects', label: 'Projects' },
   { id: 'journey', label: 'Journey' },
-  { id: 'contact', label: 'Contact' },
 ] as const
 
-export type SectionId = (typeof navLinks)[number]['id'] | 'top'
+export type SectionId = (typeof navLinks)[number]['id'] | 'contact' | 'top'
 
 export const stats = [
   { value: 20, suffix: '+', label: 'Projects built & shipped', detail: 'Solo, team and hackathon builds on GitHub' },

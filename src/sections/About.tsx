@@ -1,61 +1,8 @@
-import { animate, motion, useInView, useScroll, useTransform, type MotionValue } from 'framer-motion'
-import { Compass, Cpu, HeartHandshake } from 'lucide-react'
+import { animate, useInView } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
 import { Reveal } from '@/components/ui/Reveal'
-import { SectionHeading } from '@/components/ui/SectionHeading'
+import { useParticleShape } from '@/lib/particleShape'
 import { stats } from '@/data/profile'
-
-const statement =
-  "I'm a developer who came to code through the server room. Years of installing systems, watching networks and supporting real users taught me how software behaves in the wild. Now I build interfaces that are fast, accessible and genuinely useful."
-
-const pillars = [
-  {
-    icon: Cpu,
-    title: 'Technical interests',
-    body: 'Frontend engineering with React and TypeScript, real-time 3D on the web, secure backends with Postgres row-level security, and AI-assisted products that feel human.',
-  },
-  {
-    icon: Compass,
-    title: 'How I solve problems',
-    body: 'Start from the user and a clear PRD, then decide what not to build. I break work into small, tested steps, so each feature ships reliably before the next one starts.',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Why I build',
-    body: 'I care about technology that changes something for people, like a vault that protects a family or a tool that helps women grow an income. Meaningful beats flashy.',
-  },
-]
-
-function Word({ children, progress, range }: { children: string; progress: MotionValue<number>; range: [number, number] }) {
-  const opacity = useTransform(progress, range, [0.14, 1])
-  return (
-    <span className="relative mr-[0.25em] inline-block">
-      <motion.span style={{ opacity }}>{children}</motion.span>
-    </span>
-  )
-}
-
-/** Paragraph that lights up word by word as it scrolls through the viewport. */
-function ScrollStatement({ text }: { text: string }) {
-  const ref = useRef<HTMLParagraphElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.85', 'end 0.45'] })
-  const words = text.split(' ')
-  return (
-    <p
-      ref={ref}
-      className="font-display text-[clamp(1.6rem,3.3vw,2.85rem)] leading-[1.18] font-semibold tracking-[-0.02em] text-ink"
-    >
-      <span className="sr-only">{text}</span>
-      <span aria-hidden>
-        {words.map((w, i) => (
-          <Word key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>
-            {w}
-          </Word>
-        ))}
-      </span>
-    </p>
-  )
-}
 
 function Counter({ to, suffix }: { to: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -75,71 +22,64 @@ function Counter({ to, suffix }: { to: number; suffix: string }) {
 }
 
 export function About() {
+  const sectionRef = useRef<HTMLElement>(null)
+  useParticleShape(sectionRef, 'helix')
   return (
-    <section id="about" aria-labelledby="about-title" className="relative py-28 sm:py-36">
+    <section ref={sectionRef} id="about" aria-labelledby="about-title" className="relative py-28 sm:py-40">
       <div className="container-x">
-        <SectionHeading
-          index="01"
-          eyebrow="About me"
-          id="about-title"
-          title={
-            <>
-              Curious mind, <span className="text-gradient">careful</span> builder.
-            </>
-          }
-        />
+        {/* Centred intro */}
+        <Reveal className="mx-auto max-w-3xl text-center">
+          <h2 id="about-title" className="display-heading">
+            Curiosity &amp;
+            <span>Craft</span>
+          </h2>
+          <p className="mx-auto mt-8 max-w-2xl text-[clamp(1rem,0.6vw+0.7rem,1.2rem)] leading-[1.8] text-mist text-pretty">
+            Every product I build starts with a real problem, a clear spec and a plan for what not to build. By the time I write
+            the first component, the hard thinking is done. Then I make it real, one small, tested step at a time.
+          </p>
+          <div className="decorative-line mx-auto mt-8" />
+        </Reveal>
 
-        <div className="mt-16 grid gap-14 lg:mt-24 lg:grid-cols-12">
-          <div className="lg:col-span-7">
-            <ScrollStatement text={statement} />
-            <Reveal className="mt-10 max-w-xl space-y-5 text-[17px] leading-relaxed text-mist">
+        <div className="mt-24 grid gap-16 lg:mt-36 lg:grid-cols-2 lg:items-center lg:gap-24">
+          <Reveal>
+            <h3 className="text-[clamp(2.2rem,3vw+0.7rem,3.5rem)] leading-[1.1] font-extrabold tracking-[0.03em] uppercase">
+              From the server room
+              <span className="text-gradient block">to the codebase</span>
+            </h3>
+            <div className="mt-8 max-w-xl space-y-5 text-[16.5px] leading-[1.8] text-mist">
               <p>
-                Today I build frontend products in React and TypeScript, backed by Node.js and Supabase, and I keep
-                sharpening my craft through Melsoft Academy, the FNB App Academy and FMTALI. I've led a team as tech lead,
-                reached the finals of two hackathons, and shipped products from a blank PRD to production.
+                I came to code through systems support. Years of installing systems, monitoring networks and helping hosting
+                clients taught me how software behaves in the wild, and how it feels when it breaks for a real person.
               </p>
-            </Reveal>
-          </div>
+              <p>
+                Today I build frontend products in React and TypeScript, backed by Node.js and Supabase. I've led a team as tech
+                lead, reached the finals of two hackathons, and taken products from a blank PRD to production. I keep sharpening
+                my craft through Melsoft Academy, the FNB App Academy and FMTALI.
+              </p>
+            </div>
+            <div className="mt-10 flex items-center gap-4">
+              <span aria-hidden className="h-px w-12 bg-linear-to-r from-sky to-transparent" />
+              <span className="text-[11px] tracking-[0.24em] text-mist uppercase">Meaningful beats flashy</span>
+            </div>
+          </Reveal>
 
-          <div className="space-y-4 lg:col-span-5">
-            {pillars.map((p, i) => (
-              <Reveal key={p.title} delay={i * 0.08}>
-                <article className="glass group relative overflow-hidden rounded-3xl p-6 transition-colors duration-500 hover:border-white/20 sm:p-7">
-                  <div
-                    aria-hidden
-                    className="absolute -top-20 -right-20 size-48 rounded-full bg-violet/20 opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-100"
-                  />
-                  <div className="relative flex gap-5">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-electric/25 to-violet/25 ring-1 ring-white/10">
-                      <p.icon className="size-5 text-cyan" aria-hidden />
-                    </span>
-                    <div>
-                      <h3 className="font-display text-lg font-semibold tracking-tight">{p.title}</h3>
-                      <p className="mt-2 text-[15px] leading-relaxed text-mist">{p.body}</p>
-                    </div>
-                  </div>
-                </article>
+          <dl className="grid grid-cols-2 gap-3 sm:gap-4">
+            {stats.map((s, i) => (
+              <Reveal key={s.label} delay={i * 0.08} className="glass rounded-3xl p-6 sm:p-8">
+                <dt className="sr-only">{s.label}</dt>
+                <dd>
+                  <span className="block text-[clamp(2.5rem,4.5vw,4rem)] leading-none font-bold tracking-[-0.04em]">
+                    <Counter to={s.value} suffix={s.suffix} />
+                  </span>
+                  <span aria-hidden className="mt-4 block text-[14.5px] font-medium text-ink">
+                    {s.label}
+                  </span>
+                  <span className="mt-1 block text-[12.5px] leading-snug text-dim">{s.detail}</span>
+                </dd>
               </Reveal>
             ))}
-          </div>
+          </dl>
         </div>
-
-        <dl className="mt-20 grid grid-cols-2 overflow-hidden rounded-3xl border border-white/[0.08] bg-white/[0.06] lg:mt-28 lg:grid-cols-4 [&>*]:bg-void [&>*]:ring-1 [&>*]:ring-white/[0.06]">
-          {stats.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08} className="relative p-6 sm:p-9">
-              <dt className="sr-only">{s.label}</dt>
-              <dd>
-                <span className="block font-display text-[clamp(2.75rem,6vw,4.75rem)] leading-none font-bold tracking-[-0.04em]">
-                  <Counter to={s.value} suffix={s.suffix} />
-                </span>
-                <span aria-hidden className="mt-4 block text-[15px] font-medium text-ink">
-                  {s.label}
-                </span>
-                <span className="mt-1 block text-[13px] leading-snug text-dim">{s.detail}</span>
-              </dd>
-            </Reveal>
-          ))}
-        </dl>
       </div>
     </section>
   )

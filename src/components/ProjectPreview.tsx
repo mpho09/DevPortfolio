@@ -23,7 +23,7 @@ function BrowserFrame({ src, url, alt }: { src: string; url: string; alt: string
           height={900}
           loading="lazy"
           decoding="async"
-          className="size-full object-cover object-top transition-transform duration-[1.2s] ease-[cubic-bezier(.16,1,.3,1)] group-hover/tilt:scale-[1.04]"
+          className="size-full object-cover object-top transition-transform duration-[1.2s] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.04]"
         />
       </div>
     </div>
@@ -127,12 +127,12 @@ export function ProjectPreview({ project }: { project: Project }) {
           <PhoneFrame
             src={preview.srcs[0]}
             alt={`${name} mobile screen`}
-            className="transition-transform duration-700 group-hover/tilt:-translate-y-2 group-hover/tilt:-rotate-2"
+            className="transition-transform duration-700 group-hover:-translate-y-2 group-hover:-rotate-2"
           />
           <PhoneFrame
             src={preview.srcs[1]}
             alt={`${name} vault security setup screen`}
-            className="mt-12 transition-transform duration-700 group-hover/tilt:translate-y-1 group-hover/tilt:rotate-2"
+            className="mt-12 transition-transform duration-700 group-hover:translate-y-1 group-hover:rotate-2"
           />
         </div>
       )
