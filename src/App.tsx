@@ -21,7 +21,7 @@ export default function App() {
             Skip to content
           </a>
           <Navbar />
-          <main id="main">
+          <main id="main" className="overflow-x-clip">
             <Hero />
             <About />
             <Skills />

@@ -2,10 +2,10 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { pointer, startPointerTracking } from '@/lib/pointer'
-import { coreFragment, coreVertex, particlesFragment, particlesVertex } from './shaders'
+import { Portrait } from './Portrait'
+import { particlesFragment, particlesVertex } from './shaders'
 
 const ELECTRIC = new THREE.Color('#3d7bff')
-const VIOLET = new THREE.Color('#8b5cf6')
 const CYAN = new THREE.Color('#22d3ee')
 
 /** Soft radial sprite used for glows — generated once, no image download. */
@@ -25,129 +25,6 @@ function useGlowTexture() {
     tex.colorSpace = THREE.SRGBColorSpace
     return tex
   }, [])
-}
-
-function Core({ detail, timeScale }: { detail: number; timeScale: number }) {
-  const mesh = useRef<THREE.Mesh>(null!)
-  const uniforms = useMemo(
-    () => ({
-      uTime: { value: 0 },
-      uIntensity: { value: 0.32 },
-      uMouse: { value: new THREE.Vector2() },
-      uColorA: { value: new THREE.Color('#1b2a8f') },
-      uColorB: { value: VIOLET.clone() },
-      uColorC: { value: CYAN.clone() },
-    }),
-    [],
-  )
-
-  useFrame((_, dt) => {
-    const delta = Math.min(dt, 0.05)
-    uniforms.uTime.value += delta * timeScale
-    const m = uniforms.uMouse.value
-    m.x += (pointer.x - m.x) * 0.06
-    m.y += (pointer.y - m.y) * 0.06
-    // Moving the mouse quickly "excites" the core
-    const target = 0.3 + pointer.speed * 0.32
-    uniforms.uIntensity.value += (target - uniforms.uIntensity.value) * 0.05
-    pointer.speed *= 0.94
-    mesh.current.rotation.y += delta * 0.12 * timeScale
-    mesh.current.rotation.x += delta * 0.05 * timeScale
-  })
-
-  return (
-    <mesh ref={mesh}>
-      <icosahedronGeometry args={[1.25, detail]} />
-      <shaderMaterial uniforms={uniforms} vertexShader={coreVertex} fragmentShader={coreFragment} />
-    </mesh>
-  )
-}
-
-function Shell({ glow, timeScale }: { glow: THREE.Texture; timeScale: number }) {
-  const group = useRef<THREE.Group>(null!)
-  const { edges, nodes } = useMemo(() => {
-    const geo = new THREE.IcosahedronGeometry(2.05, 1)
-    const edges = new THREE.EdgesGeometry(geo)
-    // Unique vertices become glowing nodes
-    const pos = geo.getAttribute('position')
-    const seen = new Set<string>()
-    const pts: number[] = []
-    for (let i = 0; i < pos.count; i++) {
-      const k = `${pos.getX(i).toFixed(3)},${pos.getY(i).toFixed(3)},${pos.getZ(i).toFixed(3)}`
-      if (seen.has(k)) continue
-      seen.add(k)
-      pts.push(pos.getX(i), pos.getY(i), pos.getZ(i))
-    }
-    const nodes = new THREE.BufferGeometry()
-    nodes.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
-    geo.dispose()
-    return { edges, nodes }
-  }, [])
-
-  useFrame((_, dt) => {
-    group.current.rotation.y -= Math.min(dt, 0.05) * 0.06 * timeScale
-    group.current.rotation.z += Math.min(dt, 0.05) * 0.02 * timeScale
-  })
-
-  return (
-    <group ref={group}>
-      <lineSegments geometry={edges}>
-        <lineBasicMaterial color="#7c8cff" transparent opacity={0.16} depthWrite={false} />
-      </lineSegments>
-      <points geometry={nodes}>
-        <pointsMaterial
-          map={glow}
-          color="#9fd8ff"
-          size={0.16}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-    </group>
-  )
-}
-
-function Orbit({
-  radius,
-  tilt,
-  speed,
-  color,
-  glow,
-  offset = 0,
-  timeScale,
-}: {
-  radius: number
-  tilt: [number, number, number]
-  speed: number
-  color: string
-  glow: THREE.Texture
-  offset?: number
-  timeScale: number
-}) {
-  const sat = useRef<THREE.Group>(null!)
-  const t = useRef(offset)
-  useFrame((_, dt) => {
-    t.current += Math.min(dt, 0.05) * speed * timeScale
-    sat.current.position.set(Math.cos(t.current) * radius, 0, Math.sin(t.current) * radius)
-  })
-  return (
-    <group rotation={tilt}>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[radius, 0.0045, 6, 220]} />
-        <meshBasicMaterial color={color} transparent opacity={0.35} depthWrite={false} />
-      </mesh>
-      <group ref={sat}>
-        <mesh>
-          <sphereGeometry args={[0.045, 16, 16]} />
-          <meshBasicMaterial color="#ffffff" />
-        </mesh>
-        <sprite scale={0.6}>
-          <spriteMaterial map={glow} color={color} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
-        </sprite>
-      </group>
-    </group>
-  )
 }
 
 function Particles({ count, timeScale }: { count: number; timeScale: number }) {
@@ -198,49 +75,112 @@ function Particles({ count, timeScale }: { count: number; timeScale: number }) {
   )
 }
 
-/** Moves the whole structure toward the cursor and frames it for the viewport size. */
-function Rig({ children }: { children: React.ReactNode }) {
-  const group = useRef<THREE.Group>(null!)
-  const { viewport, camera } = useThree()
-  const wide = viewport.aspect > 1.15
-
-  useFrame(() => {
-    const g = group.current
-    const targetX = wide ? Math.min(viewport.width * 0.3, 4.4) : 0
-    const targetY = wide ? 0 : viewport.height * 0.28
-    g.position.x += (targetX - g.position.x) * 0.08
-    g.position.y += (targetY - g.position.y) * 0.08
-    g.rotation.y += (pointer.x * 0.45 - g.rotation.y) * 0.04
-    g.rotation.x += (-pointer.y * 0.3 - g.rotation.x) * 0.04
-    camera.position.x += (pointer.x * 0.35 - camera.position.x) * 0.03
-    camera.position.y += (pointer.y * 0.25 - camera.position.y) * 0.03
-    camera.lookAt(0, 0, 0)
-  })
-
-  const scale = wide ? 0.9 : Math.min(0.8, viewport.width / 6.8)
-  return (
-    <group ref={group} scale={scale}>
-      {children}
-    </group>
-  )
+/** Layout anchors measured from the hero's HTML, in canvas pixels. */
+export interface HeroAnchors {
+  canvasH: number
+  canvasW: number
+  /** Vertical centre and height of the name heading */
+  nameCenterY: number
+  nameHeight: number
+  /** Right edge of the longest name line */
+  nameRight: number
+  /** Top of the status pill (the first line of hero text) */
+  badgeTop: number
+  /** Bottom of the fixed navigation bar */
+  navBottom: number
 }
 
-function Scene({ quality, timeScale }: { quality: 'high' | 'low'; timeScale: number }) {
+// Portrait-local measurements (the bust spans roughly -1..1 vertically)
+const HEAD_CENTER = 0.3
+const HEAD_HEIGHT = 1.4
+const BUST_HALF_WIDTH = 1.0
+const VISIBLE_BOTTOM = -0.75
+
+/**
+ * Turns the portrait toward the cursor and places it relative to the hero text:
+ * level with the name on wide screens, above the text on narrow ones.
+ */
+function Rig({ children, anchors }: { children: React.ReactNode; anchors: React.RefObject<HeroAnchors | null> }) {
+  const group = useRef<THREE.Group>(null!)
+  const { viewport, camera, size } = useThree()
+
+  useFrame(({ clock }) => {
+    const g = group.current
+    const t = clock.getElapsedTime()
+    const a = anchors.current
+    // Matches the hero's `lg:landscape:` layout
+    const wide = size.width >= 1024 && size.width > size.height
+    const unit = viewport.height / size.height // world units per CSS pixel
+    const toWorldY = (px: number) => (size.height / 2 - px) * unit
+    const toWorldX = (px: number) => (px - size.width / 2) * unit
+
+    let targetX = 0
+    let targetY = 0
+    let targetScale = 1
+    if (a && wide) {
+      // Face sized to the name block and centred in the free space to its right
+      const free = viewport.width / 2 - toWorldX(a.nameRight)
+      targetScale = Math.min((a.nameHeight * unit * 1.25) / HEAD_HEIGHT, (free - 0.3) / (BUST_HALF_WIDTH * 2))
+      targetScale = Math.max(0.7, targetScale)
+      targetX = toWorldX(a.nameRight) + free / 2
+      targetY = toWorldY(a.nameCenterY) - HEAD_CENTER * targetScale
+    } else if (a) {
+      // Fit the bust into the space between the nav bar and the first line of text
+      const top = a.navBottom + 8
+      const bottom = a.badgeTop - 8
+      const regionH = Math.max(40, bottom - top) * unit
+      targetScale = Math.min(regionH / (1 - VISIBLE_BOTTOM), (viewport.width * 0.9) / (BUST_HALF_WIDTH * 2))
+      targetY = toWorldY(top) - 1 * targetScale
+    }
+    const first = g.userData.placed !== true
+    const k = first ? 1 : 0.1
+    g.position.x += (targetX - g.position.x) * k
+    g.position.y += (targetY - g.position.y) * k
+    g.scale.setScalar(g.scale.x + (targetScale - g.scale.x) * k)
+    if (a) g.userData.placed = true
+
+    // Head only turns slightly: a single photo has no detail for the hidden side, so larger turns distort the face
+    const MAX_YAW = 0.12
+    const MAX_PITCH = 0.05
+    const yaw = THREE.MathUtils.clamp(pointer.x * MAX_YAW + Math.sin(t * 0.35) * 0.025, -MAX_YAW, MAX_YAW)
+    const pitch = THREE.MathUtils.clamp(-pointer.y * MAX_PITCH + Math.sin(t * 0.27) * 0.012, -MAX_PITCH, MAX_PITCH)
+    g.rotation.y += (yaw - g.rotation.y) * 0.04
+    g.rotation.x += (pitch - g.rotation.x) * 0.04
+    // Subtle camera parallax, kept small so the portrait stays aligned with the text
+    camera.position.x += (pointer.x * 0.06 - camera.position.x) * 0.03
+    camera.position.y += (pointer.y * 0.04 - camera.position.y) * 0.03
+    camera.lookAt(camera.position.x, camera.position.y, 0)
+    pointer.speed *= 0.94
+  })
+
+  return <group ref={group}>{children}</group>
+}
+
+function Scene({
+  quality,
+  timeScale,
+  reduced,
+  anchors,
+}: {
+  quality: 'high' | 'low'
+  timeScale: number
+  reduced: boolean
+  anchors: React.RefObject<HeroAnchors | null>
+}) {
   const glow = useGlowTexture()
   return (
     <>
-      <Rig>
-        {/* Halo behind the core fakes bloom without a post-processing pass */}
-        <sprite scale={7.5} position={[0, 0, -1.2]}>
-          <spriteMaterial map={glow} color="#4f46e5" transparent opacity={0.42} depthWrite={false} blending={THREE.AdditiveBlending} />
+      <Rig anchors={anchors}>
+        {/* Soft blue and magenta halos behind the head fake bloom without post-processing */}
+        <sprite scale={5.5} position={[-0.5, 0.3, -1.4]}>
+          <spriteMaterial map={glow} color="#3b4fe0" transparent opacity={0.35} depthWrite={false} blending={THREE.AdditiveBlending} />
         </sprite>
-        <Core detail={quality === 'high' ? 5 : 3} timeScale={timeScale} />
-        <Shell glow={glow} timeScale={timeScale} />
-        <Orbit radius={2.7} tilt={[0.35, 0, 0.25]} speed={0.45} color="#22d3ee" glow={glow} timeScale={timeScale} />
-        <Orbit radius={3.15} tilt={[-0.5, 0.4, -0.15]} speed={-0.3} color="#8b5cf6" glow={glow} offset={2} timeScale={timeScale} />
-        <Orbit radius={2.35} tilt={[1.15, -0.2, 0.6]} speed={0.6} color="#3d7bff" glow={glow} offset={4} timeScale={timeScale} />
+        <sprite scale={4.2} position={[1.1, 0.1, -1.6]}>
+          <spriteMaterial map={glow} color="#c0266d" transparent opacity={0.22} depthWrite={false} blending={THREE.AdditiveBlending} />
+        </sprite>
+        <Portrait quality={quality} timeScale={timeScale} skipIntro={reduced} />
       </Rig>
-      <Particles count={quality === 'high' ? 1400 : 600} timeScale={timeScale} />
+      <Particles count={quality === 'high' ? 1200 : 500} timeScale={timeScale} />
     </>
   )
 }
@@ -253,6 +193,49 @@ export default function HeroScene({ onReady }: { onReady?: () => void }) {
     return window.innerWidth < 768 || cores <= 4 ? 'low' : 'high'
   }, [])
   const reduced = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, [])
+
+  // Measure where the hero text sits so the portrait can line up with it
+  const anchors = useRef<HeroAnchors | null>(null)
+  useEffect(() => {
+    const section = wrapper.current?.closest('section')
+    if (!section) return
+    // offsetTop ignores the scroll-linked transforms on the hero content
+    const layoutTop = (el: HTMLElement) => {
+      let y = 0
+      let n: HTMLElement | null = el
+      while (n && n !== section) {
+        y += n.offsetTop
+        n = n.offsetParent as HTMLElement | null
+      }
+      return y
+    }
+    const measure = () => {
+      const name = section.querySelector<HTMLElement>('#hero-name')
+      const badge = section.querySelector<HTMLElement>('#hero-badge')
+      const nav = document.querySelector<HTMLElement>('header nav')
+      if (!name || !badge) return
+      const sRect = section.getBoundingClientRect()
+      const words = name.querySelectorAll<HTMLElement>('[data-name-line]')
+      let right = 0
+      words.forEach((w) => (right = Math.max(right, w.getBoundingClientRect().right - sRect.left)))
+      const top = layoutTop(name)
+      anchors.current = {
+        canvasW: section.clientWidth,
+        canvasH: section.clientHeight,
+        nameCenterY: top + name.offsetHeight / 2,
+        nameHeight: name.offsetHeight,
+        nameRight: right || sRect.width / 2,
+        badgeTop: layoutTop(badge),
+        // The header is fixed with 16px top padding; measured from layout so a hidden nav doesn't skew it
+        navBottom: nav ? 16 + nav.offsetHeight : 72,
+      }
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(section)
+    document.fonts?.ready.then(measure)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => {
     startPointerTracking()
@@ -271,7 +254,7 @@ export default function HeroScene({ onReady }: { onReady?: () => void }) {
         gl={{ antialias: quality === 'high', alpha: true, powerPreference: 'high-performance' }}
         onCreated={() => onReady?.()}
       >
-        <Scene quality={quality} timeScale={reduced ? 0.15 : 1} />
+        <Scene quality={quality} timeScale={reduced ? 0.15 : 1} reduced={reduced} anchors={anchors} />
       </Canvas>
     </div>
   )

@@ -31,8 +31,8 @@ function Entry({ item, index }: { item: TimelineItem; index: number }) {
       </div>
 
       <motion.article
-        initial={{ opacity: 0, x: right ? 40 : -40 }}
-        whileInView={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '0px 0px -20% 0px' }}
         transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className={`glass group col-start-2 row-start-1 mb-10 rounded-3xl p-6 transition-colors duration-500 hover:border-white/20 sm:p-7 md:mb-14 ${
